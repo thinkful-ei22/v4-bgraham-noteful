@@ -8,19 +8,14 @@ const mongoose = require('mongoose');
 const Note = require('../models/note');
 
 /* ========== GET/READ ALL ITEMS ========== */
-router.get('/notes', (req, res, next) => {
+router.get('/', (req, res, next) => {
   const { searchTerm, folderId, tagId } = req.query;
 
   let filter = {};
 
-  /**
-   * BONUS CHALLENGE - Search both title and content using $OR Operator
-   *   filter.$or = [{ 'title': { $regex: re } }, { 'content': { $regex: re } }];
-  */
-
   if (searchTerm) {
-    const re = new RegExp(searchTerm, 'i');
-    filter.title = { $regex: re };
+    // filter.title = { $regex: searchTerm };
+    filter.$or = [{ 'title': { $regex: searchTerm } }, { 'content': { $regex: searchTerm } }];
   }
 
   if (folderId) {
@@ -33,7 +28,7 @@ router.get('/notes', (req, res, next) => {
 
   Note.find(filter)
     .populate('tags')
-    .sort('created')
+    .sort({ 'updatedAt': 'desc' })
     .then(results => {
       res.json(results);
     })
@@ -43,7 +38,7 @@ router.get('/notes', (req, res, next) => {
 });
 
 /* ========== GET/READ A SINGLE ITEM ========== */
-router.get('/notes/:id', (req, res, next) => {
+router.get('/:id', (req, res, next) => {
   const { id } = req.params;
 
   if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -67,12 +62,18 @@ router.get('/notes/:id', (req, res, next) => {
 });
 
 /* ========== POST/CREATE AN ITEM ========== */
-router.post('/notes', (req, res, next) => {
-  const { title, content, folderId, tags } = req.body;
+router.post('/', (req, res, next) => {
+  const { title, content, folderId, tags = [] } = req.body;
 
   /***** Never trust users - validate input *****/
   if (!title) {
     const err = new Error('Missing `title` in request body');
+    err.status = 400;
+    return next(err);
+  }
+
+  if (folderId && !mongoose.Types.ObjectId.isValid(folderId)) {
+    const err = new Error('The `folderId` is not valid');
     err.status = 400;
     return next(err);
   }
@@ -87,11 +88,12 @@ router.post('/notes', (req, res, next) => {
     });
   }
 
-  const newItem = { title, content, folderId, tags };
-
-  Note.create(newItem)
+  Note.create({ title, content, folderId, tags })
     .then(result => {
-      res.location(`${req.originalUrl}/${result.id}`).status(201).json(result);
+      res
+        .location(`${req.originalUrl}/${result.id}`)
+        .status(201)
+        .json(result);
     })
     .catch(err => {
       next(err);
@@ -99,43 +101,40 @@ router.post('/notes', (req, res, next) => {
 });
 
 /* ========== PUT/UPDATE A SINGLE ITEM ========== */
-router.put('/notes/:id', (req, res, next) => {
+router.put('/:id', (req, res, next) => {
   const { id } = req.params;
-  const { title, content, folderId, tags } = req.body;
+  const { title, content, folderId, tags = [] } = req.body;
 
   /***** Never trust users - validate input *****/
-  if (!title) {
-    const err = new Error('Missing `title` in request body');
-    err.status = 400;
-    return next(err);
-  }
-
   if (!mongoose.Types.ObjectId.isValid(id)) {
     const err = new Error('The `id` is not valid');
     err.status = 400;
     return next(err);
   }
 
-  if (mongoose.Types.ObjectId.isValid(folderId)) {
-    updateItem.folderId = folderId;
+  if (!title) {
+    const err = new Error('Missing `title` in request body');
+    err.status = 400;
+    return next(err);
+  }
+
+  if (folderId && !mongoose.Types.ObjectId.isValid(folderId)) {
+    const err = new Error('The `folderId` is not valid');
+    err.status = 400;
+    return next(err);
   }
 
   if (tags) {
     tags.forEach((tag) => {
       if (!mongoose.Types.ObjectId.isValid(tag)) {
-        const err = new Error('The `id` is not valid');
+        const err = new Error('The `tags.id` is not valid');
         err.status = 400;
         return next(err);
       }
     });
   }
 
-
-  const updateItem = { title, content, tags };
-  const options = { new: true };
-
-  Note.findByIdAndUpdate(id, updateItem, options)
-    .populate('tags')
+  Note.findByIdAndUpdate(id, { title, content, folderId, tags }, { new: true })
     .then(result => {
       if (result) {
         res.json(result);
@@ -149,7 +148,7 @@ router.put('/notes/:id', (req, res, next) => {
 });
 
 /* ========== DELETE/REMOVE A SINGLE ITEM ========== */
-router.delete('/notes/:id', (req, res, next) => {
+router.delete('/:id', (req, res, next) => {
   const { id } = req.params;
 
   Note.findByIdAndRemove(id)

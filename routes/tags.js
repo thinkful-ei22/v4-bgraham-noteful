@@ -9,7 +9,7 @@ const Tag = require('../models/tag');
 const Note = require('../models/note');
 
 /* ========== GET/READ ALL ITEMS ========== */
-router.get('/tags', (req, res, next) => {
+router.get('/', (req, res, next) => {
   Tag.find()
     .sort('name')
     .then(results => {
@@ -21,7 +21,7 @@ router.get('/tags', (req, res, next) => {
 });
 
 /* ========== GET/READ A SINGLE ITEM ========== */
-router.get('/tags/:id', (req, res, next) => {
+router.get('/:id', (req, res, next) => {
   const { id } = req.params;
 
   if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -44,7 +44,7 @@ router.get('/tags/:id', (req, res, next) => {
 });
 
 /* ========== POST/CREATE AN ITEM ========== */
-router.post('/tags', (req, res, next) => {
+router.post('/', (req, res, next) => {
   const { name } = req.body;
 
   const newTag = { name };
@@ -62,7 +62,7 @@ router.post('/tags', (req, res, next) => {
     })
     .catch(err => {
       if (err.code === 11000) {
-        err = new Error('The tag name already exists');
+        err = new Error('Tag name already exists');
         err.status = 400;
       }
       next(err);
@@ -70,7 +70,7 @@ router.post('/tags', (req, res, next) => {
 });
 
 /* ========== PUT/UPDATE A SINGLE ITEM ========== */
-router.put('/tags/:id', (req, res, next) => {
+router.put('/:id', (req, res, next) => {
   const { id } = req.params;
   const { name } = req.body;
 
@@ -99,7 +99,7 @@ router.put('/tags/:id', (req, res, next) => {
     })
     .catch(err => {
       if (err.code === 11000) {
-        err = new Error('The tag name already exists');
+        err = new Error('Tag name already exists');
         err.status = 400;
       }
       next(err);
@@ -107,7 +107,7 @@ router.put('/tags/:id', (req, res, next) => {
 });
 
 /* ========== DELETE/REMOVE A SINGLE ITEM ========== */
-router.delete('/tags/:id', (req, res, next) => {
+router.delete('/:id', (req, res, next) => {
   const { id } = req.params;
   const tagRemovePromise = Tag.findByIdAndRemove(id);
   // const tagRemovePromise = Tag.remove({ _id: id }); // NOTE **underscore** _id
@@ -118,15 +118,12 @@ router.delete('/tags/:id', (req, res, next) => {
   );
 
   Promise.all([tagRemovePromise, noteUpdatePromise])
-    .then(([tagResult]) => {
-      if (tagResult) {
-        res.status(204).end();
-      } else {
-        next();
-      }
+    .then(() => {
+      res.status(204).end();
     })
     .catch(err => {
-      next(err); });
+      next(err);
+    });
 
 });
 

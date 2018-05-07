@@ -18,16 +18,16 @@ app.use(morgan(process.env.NODE_ENV === 'development' ? 'dev' : 'common', {
   skip: () => process.env.NODE_ENV === 'test'
 }));
 
-// Utilize the Express static webserver, passing in the directory name
+// Create a static webserver
 app.use(express.static('public'));
 
-// Utilize the Express `.json()` body parser
+// Parse request body
 app.use(express.json());
 
 // Mount routers
-app.use('/api', notesRouter);
-app.use('/api', foldersRouter);
-app.use('/api', tagsRouter);
+app.use('/api/notes', notesRouter);
+app.use('/api/folders', foldersRouter);
+app.use('/api/tags', tagsRouter);
 
 // Catch-all 404
 app.use(function (req, res, next) {

@@ -9,7 +9,7 @@ const Folder = require('../models/folder');
 const Note = require('../models/note');
 
 /* ========== GET/READ ALL ITEMS ========== */
-router.get('/folders', (req, res, next) => {
+router.get('/', (req, res, next) => {
   Folder.find()
     .sort('name')
     .then(results => {
@@ -21,7 +21,7 @@ router.get('/folders', (req, res, next) => {
 });
 
 /* ========== GET/READ A SINGLE ITEM ========== */
-router.get('/folders/:id', (req, res, next) => {
+router.get('/:id', (req, res, next) => {
   const { id } = req.params;
 
   if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -44,7 +44,7 @@ router.get('/folders/:id', (req, res, next) => {
 });
 
 /* ========== POST/CREATE AN ITEM ========== */
-router.post('/folders', (req, res, next) => {
+router.post('/', (req, res, next) => {
   const { name } = req.body;
 
   const newFolder = { name };
@@ -62,7 +62,7 @@ router.post('/folders', (req, res, next) => {
     })
     .catch(err => {
       if (err.code === 11000) {
-        err = new Error('The folder name already exists');
+        err = new Error('Folder name already exists');
         err.status = 400;
       }
       next(err);
@@ -70,7 +70,7 @@ router.post('/folders', (req, res, next) => {
 });
 
 /* ========== PUT/UPDATE A SINGLE ITEM ========== */
-router.put('/folders/:id', (req, res, next) => {
+router.put('/:id', (req, res, next) => {
   const { id } = req.params;
   const { name } = req.body;
 
@@ -99,7 +99,7 @@ router.put('/folders/:id', (req, res, next) => {
     })
     .catch(err => {
       if (err.code === 11000) {
-        err = new Error('The folder name already exists');
+        err = new Error('Folder name already exists');
         err.status = 400;
       }
       next(err);
@@ -107,11 +107,12 @@ router.put('/folders/:id', (req, res, next) => {
 });
 
 /* ========== DELETE/REMOVE A SINGLE ITEM ========== */
-router.delete('/folders/:id', (req, res, next) => {
+router.delete('/:id', (req, res, next) => {
   const { id } = req.params;
 
-  // Manual "cascading" delete to ensure integrity
+  // ON DELETE SET NULL equivalent
   const folderRemovePromise = Folder.findByIdAndRemove({ _id: id });  // NOTE **underscore** _id
+  // ON DELETE CASCADE equivalent
   // const noteRemovePromise = Note.deleteMany({ folderId: id });
 
   const noteRemovePromise = Note.updateMany(
