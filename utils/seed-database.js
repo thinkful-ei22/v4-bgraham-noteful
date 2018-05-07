@@ -16,10 +16,12 @@ mongoose.connect(MONGODB_URI)
   .then(() => {
     return Promise.all([
       Note.insertMany(seedNotes),
+
       Folder.insertMany(seedFolders),
       Folder.createIndexes(),
+
       Tag.insertMany(seedTags),
-      Tag.createIndexes(),
+      Tag.createIndexes()
     ]);
   })
   .then(() => mongoose.disconnect())

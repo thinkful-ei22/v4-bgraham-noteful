@@ -22,7 +22,7 @@ describe('Noteful API - Folders', function () {
 
   beforeEach(function () {
     return Folder.insertMany(seedFolders)
-      .then(() => Folder.ensureIndexes());
+      .then(() => Folder.createIndexes());
   });
 
   afterEach(function () {
@@ -36,10 +36,10 @@ describe('Noteful API - Folders', function () {
   describe('GET /api/folders', function () {
 
     it('should return the correct number of folders', function () {
-      const dbPromise = Folder.find();
-      const apiPromise = chai.request(app).get('/api/folders');
-
-      return Promise.all([dbPromise, apiPromise])
+      return Promise.all([
+        Folder.find(),
+        chai.request(app).get('/api/folders')
+      ])
         .then(([data, res]) => {
           expect(res).to.have.status(200);
           expect(res).to.be.json;
@@ -49,10 +49,10 @@ describe('Noteful API - Folders', function () {
     });
 
     it('should return a list with the correct right fields', function () {
-      const dbPromise = Folder.find();
-      const apiPromise = chai.request(app).get('/api/folders');
-
-      return Promise.all([dbPromise, apiPromise])
+      return Promise.all([
+        Folder.find(),
+        chai.request(app).get('/api/folders')
+      ])
         .then(([data, res]) => {
           expect(res).to.have.status(200);
           expect(res).to.be.json;
@@ -60,7 +60,7 @@ describe('Noteful API - Folders', function () {
           expect(res.body).to.have.length(data.length);
           res.body.forEach(function (item) {
             expect(item).to.be.a('object');
-            expect(item).to.have.keys('id', 'name');
+            expect(item).to.have.keys('id', 'name', 'createdAt', 'updatedAt');
           });
         });
     });
@@ -81,7 +81,7 @@ describe('Noteful API - Folders', function () {
           expect(res).to.be.json;
 
           expect(res.body).to.be.an('object');
-          expect(res.body).to.have.keys('id', 'name');
+          expect(res.body).to.have.keys('id', 'name', 'createdAt', 'updatedAt');
 
           expect(res.body.id).to.equal(data.id);
           expect(res.body.name).to.equal(data.name);
@@ -166,7 +166,7 @@ describe('Noteful API - Folders', function () {
           expect(res).to.have.status(400);
           expect(res).to.be.json;
           expect(res.body).to.be.a('object');
-          expect(res.body.message).to.equal('The folder name already exists');
+          expect(res.body.message).to.equal('Folder name already exists');
         });
     });
 
@@ -258,7 +258,7 @@ describe('Noteful API - Folders', function () {
           expect(res).to.have.status(400);
           expect(res).to.be.json;
           expect(res.body).to.be.a('object');
-          expect(res.body.message).to.equal('The folder name already exists');
+          expect(res.body.message).to.equal('Folder name already exists');
         });
     });
 
@@ -266,16 +266,28 @@ describe('Noteful API - Folders', function () {
 
   describe('DELETE /api/folders/:id', function () {
 
-    it('should delete an item by id', function () {
-      return Folder.findOne().select('id name')
-        .then(data => {
+    it('should delete an existing document and respond with 204', function () {
+      let data;
+      return Folder.findOne()
+        .then( _data => {
+          data = _data;
           return chai.request(app).delete(`/api/folders/${data.id}`);
         })
+        .then(function (res) {
+          expect(res).to.have.status(204);
+          return Folder.count({_id : data.id});
+        })
+        .then( count => {
+          expect(count).to.equal(0);
+        });
+    });
+
+    it('should respond with 404 when document does not exist', function () {
+      return chai.request(app).delete('/api/folders/DOESNOTEXIST')
         .then((res) => {
           expect(res).to.have.status(204);
         });
     });
-
 
   });
 

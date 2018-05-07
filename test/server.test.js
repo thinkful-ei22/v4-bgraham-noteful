@@ -13,7 +13,7 @@ describe('Reality Check', () => {
     expect(true).to.be.true;
   });
 
-  it('2 + 2 should equal 4 (except in 1984)', () => {
+  it('2 + 2 should equal 4', () => {
     expect(2 + 2).to.equal(4);
   });
 

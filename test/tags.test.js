@@ -9,7 +9,6 @@ const { TEST_MONGODB_URI } = require('../config');
 const Tag = require('../models/tag');
 const seedTags = require('../db/seed/tags');
 
-
 const expect = chai.expect;
 
 chai.use(chaiHttp);
@@ -22,7 +21,7 @@ describe('Noteful API - Tags', function () {
 
   beforeEach(function () {
     return Tag.insertMany(seedTags)
-      .then(() => Tag.ensureIndexes());
+      .then(() => Tag.createIndexes());
   });
 
   afterEach(function () {
@@ -37,10 +36,10 @@ describe('Noteful API - Tags', function () {
   describe('GET /api/tags', function () {
 
     it('should return the correct number of tags', function () {
-      const dbPromise = Tag.find();
-      const apiPromise = chai.request(app).get('/api/tags');
-
-      return Promise.all([dbPromise, apiPromise])
+      return Promise.all([
+        Tag.find(),
+        chai.request(app).get('/api/tags')
+      ])
         .then(([data, res]) => {
           expect(res).to.have.status(200);
           expect(res).to.be.json;
@@ -50,10 +49,10 @@ describe('Noteful API - Tags', function () {
     });
 
     it('should return a list with the correct right fields', function () {
-      const dbPromise = Tag.find();
-      const apiPromise = chai.request(app).get('/api/tags');
-
-      return Promise.all([dbPromise, apiPromise])
+      return Promise.all([
+        Tag.find(),
+        chai.request(app).get('/api/tags')
+      ])
         .then(([data, res]) => {
           expect(res).to.have.status(200);
           expect(res).to.be.json;
@@ -61,7 +60,7 @@ describe('Noteful API - Tags', function () {
           expect(res.body).to.have.length(data.length);
           res.body.forEach(function (item) {
             expect(item).to.be.a('object');
-            expect(item).to.have.keys('id', 'name');
+            expect(item).to.have.keys('id', 'name', 'createdAt', 'updatedAt');
           });
         });
     });
@@ -82,7 +81,7 @@ describe('Noteful API - Tags', function () {
           expect(res).to.be.json;
 
           expect(res.body).to.be.an('object');
-          expect(res.body).to.have.keys('id', 'name');
+          expect(res.body).to.have.keys('id', 'name', 'createdAt', 'updatedAt');
 
           expect(res.body.id).to.equal(data.id);
           expect(res.body.name).to.equal(data.name);
@@ -167,7 +166,7 @@ describe('Noteful API - Tags', function () {
           expect(res).to.have.status(400);
           expect(res).to.be.json;
           expect(res.body).to.be.a('object');
-          expect(res.body.message).to.equal('The tag name already exists');
+          expect(res.body.message).to.equal('Tag name already exists');
         });
     });
 
@@ -259,7 +258,7 @@ describe('Noteful API - Tags', function () {
           expect(res).to.have.status(400);
           expect(res).to.be.json;
           expect(res.body).to.be.a('object');
-          expect(res.body.message).to.equal('The tag name already exists');
+          expect(res.body.message).to.equal('Tag name already exists');
         });
     });
 
@@ -267,11 +266,24 @@ describe('Noteful API - Tags', function () {
 
   describe('DELETE /api/tags/:id', function () {
 
-    it('should delete an item by id', function () {
-      return Tag.findOne().select('id name')
-        .then(data => {
+    it('should delete an existing document and respond with 204', function () {
+      let data;
+      return Tag.findOne()
+        .then( _data => {
+          data = _data;
           return chai.request(app).delete(`/api/tags/${data.id}`);
         })
+        .then(function (res) {
+          expect(res).to.have.status(204);
+          return Tag.count({_id : data.id});
+        })
+        .then( count => {
+          expect(count).to.equal(0);
+        });
+    });
+
+    it('should respond with 404 when document does not exist', function () {
+      return chai.request(app).delete('/api/tags/DOESNOTEXIST')
         .then((res) => {
           expect(res).to.have.status(204);
         });
