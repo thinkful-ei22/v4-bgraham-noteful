@@ -16,10 +16,10 @@ const noteful = (function () {
   }
 
   function handleErrors(err) {
-    // if (err.status === 401) {
-    // store.authorized = false;
-    // noteful.render();
-    // }
+    if (err.status === 401) {
+      store.authorized = false;
+      noteful.render();
+    }
     showFailureMessage(err.responseJSON.message);
   }
 
@@ -286,9 +286,10 @@ const noteful = (function () {
 
       api.remove(`/api/folders/${folderId}`)
         .then(() => {
-          const notesPromise = api.search('/api/notes');
-          const folderPromise = api.search('/api/folders');
-          return Promise.all([notesPromise, folderPromise]);
+          return Promise.all([
+            api.search('/api/notes'),
+            api.search('/api/folders')
+          ]);
         })
         .then(([notes, folders]) => {
           store.notes = notes;
