@@ -4,13 +4,17 @@ const mongoose = require('mongoose');
 
 const tagSchema = new mongoose.Schema({
   name: { type: String, unique: true, required: true }
-}, { timestamps: true });
+});
 
+// Add `createdAt` and `updatedAt` fields
+tagSchema.set('timestamps', true);
+
+// Customize output for `res.json(data)`, `console.log(data)` etc.
 tagSchema.set('toObject', {
-  transform: function (doc, ret) {
-    ret.id = ret._id;
-    delete ret._id;
-    delete ret.__v;
+  virtuals: true,     // include built-in virtual `id`
+  versionKey: false,  // remove `__v` version key
+  transform: (doc, ret) => {
+    delete ret._id; // delete `_id`
   }
 });
 

@@ -1,20 +1,25 @@
 [
   {
     "_id": "333333333333333333333300",
-    "fullname": "User Zero",
-    "username": "user0",
+    "fullname": "Bob User",
+    "username": "bobuser",
     "password": "password"
   },
   {
     "_id": "333333333333333333333301",
-    "fullname": "User One",
-    "username": "user1",
+    "fullname": "Pat User",
+    "username": "patuser",
     "password": "password"
   },
   {
     "_id": "333333333333333333333302",
-    "fullname": "User Two",
-    "username": "user2",
+    "fullname": "Jane User",
+    "username": "janeuser",
+    "password": "password"
+  },
+  {
+    "_id": "333333333333333333333303",
+    "username": "anonuser",
     "password": "password"
   }
 ]

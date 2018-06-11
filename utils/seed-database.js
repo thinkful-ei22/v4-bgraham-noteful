@@ -3,6 +3,7 @@
 const mongoose = require('mongoose');
 
 const { MONGODB_URI } = require('../config');
+
 const Note = require('../models/note');
 const Folder = require('../models/folder');
 const Tag = require('../models/tag');
@@ -11,10 +12,16 @@ const seedNotes = require('../db/seed/notes');
 const seedFolders = require('../db/seed/folders');
 const seedTags = require('../db/seed/tags');
 
+console.log(`Connecting to mongodb at ${MONGODB_URI}`);
 mongoose.connect(MONGODB_URI)
-  .then(() => mongoose.connection.db.dropDatabase())
   .then(() => {
+    console.info('Dropping Database');
+    return mongoose.connection.db.dropDatabase();
+  })
+  .then(() => {
+    console.info('Seeding Database');
     return Promise.all([
+
       Note.insertMany(seedNotes),
 
       Folder.insertMany(seedFolders),
@@ -22,10 +29,14 @@ mongoose.connect(MONGODB_URI)
 
       Tag.insertMany(seedTags),
       Tag.createIndexes()
+
     ]);
   })
-  .then(() => mongoose.disconnect())
+  .then(() => {
+    console.info('Disconnecting');
+    return mongoose.disconnect();
+  })
   .catch(err => {
-    console.error(`ERROR: ${err.message}`);
     console.error(err);
+    return mongoose.disconnect();
   });

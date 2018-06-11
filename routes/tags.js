@@ -1,15 +1,16 @@
 'use strict';
 
 const express = require('express');
-const router = express.Router();
-
 const mongoose = require('mongoose');
 
 const Tag = require('../models/tag');
 const Note = require('../models/note');
 
+const router = express.Router();
+
 /* ========== GET/READ ALL ITEMS ========== */
 router.get('/', (req, res, next) => {
+
   Tag.find()
     .sort('name')
     .then(results => {
@@ -24,6 +25,7 @@ router.get('/', (req, res, next) => {
 router.get('/:id', (req, res, next) => {
   const { id } = req.params;
 
+  /***** Never trust users - validate input *****/
   if (!mongoose.Types.ObjectId.isValid(id)) {
     const err = new Error('The `id` is not valid');
     err.status = 400;
@@ -75,14 +77,14 @@ router.put('/:id', (req, res, next) => {
   const { name } = req.body;
 
   /***** Never trust users - validate input *****/
-  if (!name) {
-    const err = new Error('Missing `name` in request body');
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    const err = new Error('The `id` is not valid');
     err.status = 400;
     return next(err);
   }
 
-  if (!mongoose.Types.ObjectId.isValid(id)) {
-    const err = new Error('The `id` is not valid');
+  if (!name) {
+    const err = new Error('Missing `name` in request body');
     err.status = 400;
     return next(err);
   }
@@ -109,17 +111,24 @@ router.put('/:id', (req, res, next) => {
 /* ========== DELETE/REMOVE A SINGLE ITEM ========== */
 router.delete('/:id', (req, res, next) => {
   const { id } = req.params;
+
+  /***** Never trust users - validate input *****/
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    const err = new Error('The `id` is not valid');
+    err.status = 400;
+    return next(err);
+  }
+
   const tagRemovePromise = Tag.findByIdAndRemove(id);
-  // const tagRemovePromise = Tag.remove({ _id: id }); // NOTE **underscore** _id
 
   const noteUpdatePromise = Note.updateMany(
-    { 'tags': id, },
-    { '$pull': { 'tags': id } }
+    { tags: id, },
+    { $pull: { tags: id } }
   );
 
   Promise.all([tagRemovePromise, noteUpdatePromise])
     .then(() => {
-      res.status(204).end();
+      res.sendStatus(204).end();
     })
     .catch(err => {
       next(err);
