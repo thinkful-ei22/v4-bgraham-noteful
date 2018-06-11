@@ -16,10 +16,5 @@
     "fullname": "Jane User",
     "username": "janeuser",
     "password": "password"
-  },
-  {
-    "_id": "333333333333333333333303",
-    "username": "anonuser",
-    "password": "password"
   }
 ]
