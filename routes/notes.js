@@ -127,7 +127,7 @@ router.put('/:id', (req, res, next) => {
   }
 
   if (tags) {
-    const badIds = tags.map((tag) => !mongoose.Types.ObjectId.isValid(tag));
+    const badIds = tags.filter((tag) => !mongoose.Types.ObjectId.isValid(tag));
     if (badIds.length) {
       const err = new Error('The tags `id` is not valid');
       err.status = 400;
