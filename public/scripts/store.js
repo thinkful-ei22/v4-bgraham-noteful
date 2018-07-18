@@ -7,12 +7,12 @@ const store = (function () {
     notes: [],
     folders: [],
     tags: [],
+
     currentNote: {},
     currentQuery: {
       searchTerm: '',
     },
-    currentUser: {},
-    authToken: ''
+    authToken: ''  // <<== Add this
   };
 
 }());

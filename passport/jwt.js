@@ -1,6 +1,6 @@
 'use strict';
 
-const { Strategy: JwtStrategy, ExtractJwt } = require ('passport-jwt');
+const { Strategy: JwtStrategy, ExtractJwt } = require('passport-jwt');
 const { JWT_SECRET } = require('../config');
 
 const options = {
@@ -9,7 +9,7 @@ const options = {
   algorithms: ['HS256']
 };
 
-const jwtStrategy = new JwtStrategy (options, (payload, done) => {
+const jwtStrategy = new JwtStrategy(options, (payload, done) => {
   done(null, payload.user);
 });
 
