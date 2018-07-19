@@ -1,32 +1,33 @@
 'use strict';
 
-const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
+const mongoose = require('mongoose');
 
+// ===== Define UserSchema & UserModel =====
 const userSchema = new mongoose.Schema({
-  fullName: {type: String},
-  username: {type: String, required: true, unique: true},
-  password: {type: String, required: true},
-
+  fullname: { type: String, default: '' },
+  username: { type: String, required: true, unique: true },
+  password: { type: String, required: true }
 });
 
+// Customize output for `res.json(data)`, `console.log(data)` etc.
 userSchema.set('toObject', {
-  virtuals: true,
-  versionKey: false,
+  virtuals: true,     // include built-in virtual `id`
+  versionKey: false,  // remove `__v` version key
   transform: (doc, ret) => {
-    delete ret._id;
+    delete ret._id; // delete `_id`
     delete ret.password;
   }
 });
 
-userSchema.methods.validatePassword = function (password) {
-  return bcrypt.compare(password, this.password);
+// Note: Use `function` (not an `arrow function`) to allow setting `this`
+userSchema.methods.validatePassword = function (pwd) {
+  const currentUser = this;
+  return bcrypt.compare(pwd, currentUser.password);
 };
 
-userSchema.statics.hashPassword = function (password) {
-  return bcrypt.hash(password, 10);
+userSchema.statics.hashPassword = function (pwd) {
+  return bcrypt.hash(pwd, 10);
 };
 
-
-  
 module.exports = mongoose.model('User', userSchema);

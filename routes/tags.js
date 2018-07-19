@@ -2,28 +2,21 @@
 
 const express = require('express');
 const mongoose = require('mongoose');
+const passport = require('passport');
 
 const Tag = require('../models/tag');
 const Note = require('../models/note');
-const passport = require('passport');
 
 const router = express.Router();
 
-
 // Protect endpoints using JWT Strategy
-router.use('/', passport.authenticate('jwt', { session: false, failWithError: true }));
-
-
+router.use(passport.authenticate('jwt', { session: false, failWithError: true }));
 
 /* ========== GET/READ ALL ITEMS ========== */
 router.get('/', (req, res, next) => {
   const userId = req.user.id;
 
-  let filter={};
-  
-  filter.userId =userId;
-  
-  Tag.find(filter)
+  Tag.find({ userId })
     .sort('name')
     .then(results => {
       res.json(results);
@@ -45,7 +38,7 @@ router.get('/:id', (req, res, next) => {
     return next(err);
   }
 
-  Tag.findOne({_id: id, userId})
+  Tag.findOne({ _id: id, userId })
     .then(result => {
       if (result) {
         res.json(result);
@@ -65,7 +58,6 @@ router.post('/', (req, res, next) => {
 
   const newTag = { name, userId };
 
-  
   /***** Never trust users - validate input *****/
   if (!name) {
     const err = new Error('Missing `name` in request body');
@@ -107,8 +99,7 @@ router.put('/:id', (req, res, next) => {
 
   const updateTag = { name, userId };
 
-  Tag.findOne({_id:id, userId}, { new: true })
-    .update(updateTag)
+  Tag.findByIdAndUpdate(id, updateTag, { new: true })
     .then(result => {
       if (result) {
         res.json(result);
@@ -137,14 +128,16 @@ router.delete('/:id', (req, res, next) => {
     return next(err);
   }
 
-  Tag.findOneAndRemove({_id: id, userId})
+  const tagRemovePromise = Tag.findOneAndRemove({ _id: id, userId });
+
+  const noteUpdatePromise = Note.updateMany(
+    { tags: id, userId },
+    { $pull: { tags: id } }
+  );
+
+  Promise.all([tagRemovePromise, noteUpdatePromise])
     .then(() => {
-      Note.updateMany(
-        { tags: id, },
-        { $pull: { tags: id } });
-    })
-    .then(() => {
-      res.sendStatus(204);
+      res.status(204).end();
     })
     .catch(err => {
       next(err);

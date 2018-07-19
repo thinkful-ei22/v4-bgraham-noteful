@@ -13,7 +13,7 @@ const { TEST_MONGODB_URI } = require('../config');
 chai.use(chaiHttp);
 const expect = chai.expect;
 
-describe('Noteful API - Folders', function () {
+describe.skip('Noteful API - Folders', function () {
 
   before(function () {
     return mongoose.connect(TEST_MONGODB_URI)

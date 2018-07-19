@@ -9,20 +9,14 @@ const Note = require('../models/note');
 
 const router = express.Router();
 
-
-
 // Protect endpoints using JWT Strategy
-router.use('/', passport.authenticate('jwt', { session: false, failWithError: true }));
-
+router.use(passport.authenticate('jwt', { session: false, failWithError: true }));
 
 /* ========== GET/READ ALL ITEMS ========== */
 router.get('/', (req, res, next) => {
   const userId = req.user.id;
 
-  let filter = {};
-
-  filter.userId =userId;
-  Folder.find(filter)
+  Folder.find({ userId })
     .sort('name')
     .then(results => {
       res.json(results);
@@ -37,13 +31,14 @@ router.get('/:id', (req, res, next) => {
   const { id } = req.params;
   const userId = req.user.id;
 
+  /***** Never trust users - validate input *****/
   if (!mongoose.Types.ObjectId.isValid(id)) {
     const err = new Error('The `id` is not valid');
     err.status = 400;
     return next(err);
   }
 
-  Folder.findOne({_id: id, userId})
+  Folder.findOne({ _id: id, userId })
     .then(result => {
       if (result) {
         res.json(result);
@@ -61,7 +56,7 @@ router.post('/', (req, res, next) => {
   const { name } = req.body;
   const userId = req.user.id;
 
-  const newFolder = { name , userId};
+  const newFolder = { name, userId };
 
   /***** Never trust users - validate input *****/
   if (!name) {
@@ -104,8 +99,7 @@ router.put('/:id', (req, res, next) => {
 
   const updateFolder = { name, userId };
 
-  Folder.findOne({_id: id, userId}, { new: true })
-    .update(updateFolder)
+  Folder.findByIdAndUpdate(id, updateFolder, { new: true })
     .then(result => {
       if (result) {
         res.json(result);
@@ -134,10 +128,10 @@ router.delete('/:id', (req, res, next) => {
     return next(err);
   }
 
-  const folderRemovePromise = Folder.findOneAndRemove({_id:id, userId});
+  const folderRemovePromise = Folder.findOneAndRemove({ _id: id, userId });
 
   const noteRemovePromise = Note.updateMany(
-    { folderId: id },
+    { folderId: id, userId },
     { $unset: { folderId: '' } }
   );
 
