@@ -36,6 +36,16 @@ function validateTagIds(tags, userId) {
     err.status = 400;
     return Promise.reject(err);
   }
+
+  const badIds = tags.filter(tag => !mongoose.Types.ObjectId.isValid(tag));
+
+  if (badIds.length){
+    const err = new Error('The `tags` array contains an invalid `id`');
+    err.status = 400;
+    return Promise.reject(err);  
+  }
+
+
   return Tag.find({ $and: [{ _id: { $in: tags }, userId }] })
     .then(results => {
       if (tags.length !== results.length) {
