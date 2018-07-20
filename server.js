@@ -4,9 +4,9 @@ const express = require('express');
 const morgan = require('morgan');
 const mongoose = require('mongoose');
 const passport = require('passport');
+
 const localStrategy =  require('./passport/local');
 const jwtStrategy = require('./passport/jwt');
-
 const { PORT, MONGODB_URI } = require('./config');
 
 const notesRouter = require('./routes/notes');
@@ -35,10 +35,13 @@ passport.use(localStrategy);
 //use jwtStrategy
 passport.use(jwtStrategy);
 
+// Protect endpoints using JWT Strategy
+const jwtAuth = passport.authenticate('jwt', { session: false, failWithError: true });
+
 // Mount routers
-app.use('/api/notes', notesRouter);
-app.use('/api/folders', foldersRouter);
-app.use('/api/tags', tagsRouter);
+app.use('/api/notes',jwtAuth, notesRouter);
+app.use('/api/folders',jwtAuth, foldersRouter);
+app.use('/api/tags', jwtAuth, tagsRouter);
 app.use('/api/users', usersRouter);
 app.use('/api', authRouter);
 
@@ -48,7 +51,6 @@ app.use((req, res, next) => {
   err.status = 404;
   next(err);
 });
-
 // Custom Error Handler
 app.use((err, req, res, next) => {
   if (err.status) {
@@ -56,6 +58,9 @@ app.use((err, req, res, next) => {
     res.status(err.status).json(errBody);
   } else {
     res.status(500).json({ message: 'Internal Server Error' });
+    if (process.env.NODE_ENV !== 'test') {
+      console.error(err);
+    }
   }
 });
 

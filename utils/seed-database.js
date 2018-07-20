@@ -14,7 +14,6 @@ const seedFolders = require('../db/seed/folders');
 const seedTags = require('../db/seed/tags');
 const seedUsers = require('../db/seed/users');
 
-
 console.log(`Connecting to mongodb at ${MONGODB_URI}`);
 mongoose.connect(MONGODB_URI)
   .then(() => {
@@ -34,8 +33,7 @@ mongoose.connect(MONGODB_URI)
       Tag.createIndexes(),
 
       User.insertMany(seedUsers),
-      User.createIndexes()
-
+      User.createIndexes(),
     ]);
   })
   .then(() => {
